@@ -210,6 +210,43 @@ body.offline .live { opacity: .5; filter: saturate(.5); transition: opacity .3s;
 .audit-num { font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
 .audit-num b { font-family: var(--mono); color: var(--text); font-size: 15px; }
 
+/* Controller */
+.ctl { margin-top: 14px; }
+.ctl .ph { flex-wrap: wrap; }
+.ctl-top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.ctl-row { display: flex; gap: 8px; margin: 6px 0; min-width: 0; }
+.ctl input {
+  flex: 1; min-width: 0; font: 13px var(--mono); color: var(--text);
+  background: rgba(13, 15, 44, .7); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
+}
+.ctl input:focus { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.btn {
+  font: 700 12px var(--sans); letter-spacing: .04em; color: var(--text); white-space: nowrap; cursor: pointer;
+  background: rgba(64, 78, 160, .45); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+}
+.btn:hover:not(:disabled) { background: rgba(90, 210, 255, .2); border-color: var(--cyan); }
+.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.ghost { background: transparent; }
+.btn.mini { font-size: 11px; padding: 4px 9px; flex: none; }
+.seg { display: inline-flex; margin: 6px 0; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.seg .btn { border: 0; border-radius: 0; background: transparent; min-width: 96px; }
+.seg .btn + .btn { border-left: 1px solid var(--border); }
+#mode-normal[aria-pressed="true"] { color: var(--teal); background: rgba(25, 205, 185, .16); }
+#mode-strict[aria-pressed="true"] { color: var(--amber); background: rgba(255, 181, 72, .16); }
+.hint.warn { color: var(--amber); } .hint.bad { color: var(--red); } .hint.ok { color: var(--teal); }
+.ctl-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+.clist { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 230px; overflow-y: auto; }
+.citem {
+  display: flex; align-items: center; gap: 8px; padding: 6px 9px; border-radius: 8px; min-width: 0;
+  border: 1px solid rgba(64, 78, 160, .6); background: rgba(13, 15, 44, .35);
+}
+.citem.changed { border-color: rgba(255, 78, 96, .55); background: rgba(255, 78, 96, .08); }
+.grow { flex: 1; min-width: 0; }
+.cname { font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.csub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.res-ok { color: var(--teal); } .res-bad { color: var(--red); }
+
 footer {
   margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line);
   display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px;
@@ -222,7 +259,7 @@ footer .upd { font-family: var(--mono); color: var(--dim); }
   .b-state { display: none; }
 }
 @media (max-width: 980px) {
-  .shield, .grid { grid-template-columns: minmax(0, 1fr); }
+  .shield, .grid, .ctl-top, .ctl-grid { grid-template-columns: minmax(0, 1fr); }
   .shield-card { border-right: 0; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
   .badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .top { flex-wrap: wrap; }
@@ -374,6 +411,43 @@ footer .upd { font-family: var(--mono); color: var(--dim); }
         </div>
       </div>
     </div>
+
+    <section class="panel ctl" aria-labelledby="h-ctl">
+      <div class="ph"><h2 id="h-ctl" class="h">Controller</h2><span class="muted">Airlock decides every request on its own. The controller sets the parameters, and every change is written to the audit chain.</span></div>
+      <div class="ctl-top">
+        <div>
+          <label for="admin-token" class="h small">Admin token</label>
+          <div class="ctl-row">
+            <input id="admin-token" type="password" autocomplete="off" spellcheck="false" placeholder="Admin token">
+            <button id="admin-use" type="button" class="btn">Use token</button>
+            <button id="admin-forget" type="button" class="btn ghost">Forget</button>
+          </div>
+          <div id="admin-hint" class="muted hint">Paste the admin token printed by python -m airlock serve</div>
+        </div>
+        <div>
+          <span class="h small">Mode</span>
+          <div><div class="seg" role="group" aria-label="Policy mode">
+            <button id="mode-normal" type="button" class="btn" aria-pressed="false" disabled>Normal</button>
+            <button id="mode-strict" type="button" class="btn" aria-pressed="false" disabled>Strict</button>
+          </div></div>
+          <div id="mode-note" class="muted">Normal: the policy the proxy started with. Strict: MEDIUM findings in third-party content are removed and HIGH ones block the request.</div>
+        </div>
+      </div>
+      <div class="ctl-grid">
+        <div>
+          <h3 class="h small">Changed tools</h3>
+          <ul id="changed" class="clist"><li class="empty">No token set.</li></ul>
+        </div>
+        <div>
+          <h3 class="h small">Reputation subjects</h3>
+          <ul id="pardons" class="clist"><li class="empty">No token set.</li></ul>
+        </div>
+        <div>
+          <h3 class="h small">Admin actions</h3>
+          <ol id="admin-log" class="clist"><li class="empty">No actions in this tab yet.</li></ol>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -689,6 +763,208 @@ footer .upd { font-family: var(--mono); color: var(--dim); }
       setTimeout(poll, POLL_MS);
     }
   }
+
+  /* Controller: admin calls carry the token printed by python -m airlock serve */
+  var ADMIN_POLL_MS = 3000;
+  var TOKEN_KEY = "airlock-admin-token";
+  var NO_TOKEN = "Paste the admin token printed by python -m airlock serve";
+  var admin = { token: "", gen: 0, timer: null, busy: false, log: [] };
+
+  function readToken() { try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } }
+  function keepToken(t) {
+    try { if (t) sessionStorage.setItem(TOKEN_KEY, t); else sessionStorage.removeItem(TOKEN_KEY); } catch (e) { /* this tab only */ }
+  }
+  function setHint(text, tone) {
+    var h = $("admin-hint");
+    h.className = "muted hint" + (tone ? " " + tone : "");
+    h.textContent = text;
+  }
+
+  async function adminCall(method, path, payload) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, 4000);
+    try {
+      var headers = { "accept": "application/json", "x-airlock-admin-token": admin.token };
+      var opts = { method: method, cache: "no-store", credentials: "same-origin", signal: ctrl.signal, headers: headers };
+      if (payload !== undefined) { headers["content-type"] = "application/json"; opts.body = JSON.stringify(payload); }
+      var r = await fetch(path, opts);
+      var data = null;
+      try { data = await r.json(); } catch (e) { data = null; }
+      return { status: r.status, data: data };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function setModeButtons(mode, enabled) {
+    ["normal", "strict"].forEach(function (m) {
+      var b = $("mode-" + m);
+      b.disabled = !enabled;
+      b.setAttribute("aria-pressed", mode === m ? "true" : "false");
+    });
+  }
+
+  function renderAdminIdle() {
+    setModeButtons(null, false);
+    $("changed").replaceChildren(el("li", "empty", "No token set."));
+    $("pardons").replaceChildren(el("li", "empty", "No token set."));
+  }
+
+  function actionButton(label, onClick) {
+    var b = el("button", "btn mini", label);
+    b.type = "button";
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function renderAdmin(s) {
+    setModeButtons(str(s.mode), true);
+
+    var changed = Array.isArray(s.changed_tools) ? s.changed_tools.filter(isObj) : [];
+    var items = changed.map(function (c) {
+      var name = str(c.tool);
+      var li = el("li", "citem changed");
+      var text = el("div", "grow");
+      var n = el("div", "cname", name);
+      n.title = name;
+      text.appendChild(n);
+      text.appendChild(el("div", "csub", "pinned " + str(c.pinned) + ", now " + str(c.latest)));
+      li.appendChild(text);
+      li.appendChild(actionButton("Approve new definition", function () {
+        adminAction("/airlock/admin/pins/approve", { tool: name }, "Approve " + name);
+      }));
+      return li;
+    });
+    if (!items.length) items = [el("li", "empty", "Every tool matches its pinned definition.")];
+    var cl = $("changed");
+    cl.replaceChildren.apply(cl, items);
+
+    var rep = isObj(s.reputation) ? s.reputation : {};
+    var subjects = Object.keys(rep).filter(function (k) { return isObj(rep[k]); });
+    subjects.sort(function (a, b) { return num(rep[a].score) - num(rep[b].score) || (a < b ? -1 : a > b ? 1 : 0); });
+    var rows = subjects.map(function (subject) {
+      var e = rep[subject], lv = levelOf(e);
+      var li = el("li", "citem");
+      var text = el("div", "grow");
+      var n = el("div", "cname", subject);
+      n.title = subject;
+      text.appendChild(n);
+      text.appendChild(el("div", "csub", Math.round(num(e.score)) + " of baseline " + Math.round(num(e.baseline)) + ", " + LEVEL_NAMES[lv]));
+      li.appendChild(text);
+      var b = actionButton("Pardon (reset)", function () {
+        adminAction("/airlock/admin/reputation/reset", { subject: subject }, "Pardon " + subject);
+      });
+      if (num(e.score) >= num(e.baseline)) { b.disabled = true; b.title = "Already at its baseline score"; }
+      li.appendChild(b);
+      return li;
+    });
+    if (!rows.length) rows = [el("li", "empty", "No subjects yet. Tools earn a score once they appear in traffic.")];
+    var pl = $("pardons");
+    pl.replaceChildren.apply(pl, rows);
+  }
+
+  function logAdmin(label, result, ok) {
+    admin.log.unshift({ t: clock(new Date()), label: label, result: result, ok: ok });
+    if (admin.log.length > 8) admin.log.length = 8;
+    var list = $("admin-log");
+    list.replaceChildren.apply(list, admin.log.map(function (a) {
+      var li = el("li", "citem");
+      var text = el("div", "grow");
+      var n = el("div", "cname", a.label);
+      n.title = a.label;
+      text.appendChild(n);
+      text.appendChild(el("div", "csub", a.t));
+      li.appendChild(text);
+      li.appendChild(el("span", "small " + (a.ok ? "res-ok" : "res-bad"), a.result));
+      return li;
+    }));
+  }
+
+  function stopAdminPoll() {
+    if (admin.timer) { clearTimeout(admin.timer); admin.timer = null; }
+  }
+
+  async function pollAdmin(gen) {
+    if (gen !== admin.gen || !admin.token) return;
+    admin.timer = null;
+    try {
+      var res = await adminCall("GET", "/airlock/admin/state");
+      if (gen !== admin.gen) return;
+      if (res.status === 401) { rejectToken(); return; }
+      if (res.status === 200 && isObj(res.data)) {
+        safe(renderAdmin, res.data);
+        setHint("Token accepted. Kept for this tab only (sessionStorage).", "ok");
+      } else {
+        setHint("Controller state unavailable (HTTP " + res.status + "). Retrying.", "warn");
+      }
+    } catch (e) {
+      if (gen !== admin.gen) return;
+      setHint("Controller state unavailable. Retrying.", "warn");
+    }
+    if (gen === admin.gen && admin.token) {
+      admin.timer = setTimeout(function () { pollAdmin(gen); }, ADMIN_POLL_MS);
+    }
+  }
+
+  function pollAdminNow() {
+    stopAdminPoll();
+    admin.gen += 1;
+    pollAdmin(admin.gen);
+  }
+
+  function setToken(t) {
+    admin.token = t;
+    keepToken(t);
+    stopAdminPoll();
+    admin.gen += 1;
+    if (!t) { renderAdminIdle(); return; }
+    setHint("Checking the token.", "");
+    pollAdmin(admin.gen);
+  }
+
+  function rejectToken() {
+    setToken("");
+    setHint("The proxy rejected that token. " + NO_TOKEN + ".", "bad");
+  }
+
+  async function adminAction(path, payload, label) {
+    if (!admin.token || admin.busy) return;
+    admin.busy = true;
+    var result = "", ok = false, rejected = false;
+    try {
+      var res = await adminCall("POST", path, payload);
+      if (res.status === 401) { result = "token rejected"; rejected = true; }
+      else if (res.status === 200) { result = "ok"; ok = true; }
+      else result = "HTTP " + res.status + (isObj(res.data) && res.data.error ? ": " + str(res.data.error) : "");
+    } catch (e) {
+      result = "proxy unreachable";
+    } finally {
+      admin.busy = false;
+    }
+    logAdmin(label, result, ok);
+    if (rejected) rejectToken();
+    else if (admin.token) pollAdminNow();
+  }
+
+  function useToken() {
+    var input = $("admin-token");
+    var t = input.value.trim();
+    input.value = "";
+    if (!t) { setHint(NO_TOKEN, ""); return; }
+    if (!/^[\x21-\x7e]{1,512}$/.test(t)) { setHint("That does not look like an admin token. " + NO_TOKEN + ".", "bad"); return; }
+    setToken(t);
+  }
+
+  $("admin-use").addEventListener("click", useToken);
+  $("admin-token").addEventListener("keydown", function (e) { if (e.key === "Enter") useToken(); });
+  $("admin-forget").addEventListener("click", function () { setToken(""); setHint(NO_TOKEN, ""); });
+  ["normal", "strict"].forEach(function (m) {
+    $("mode-" + m).addEventListener("click", function () {
+      adminAction("/airlock/admin/mode", { mode: m }, m === "strict" ? "Mode Strict" : "Mode Normal");
+    });
+  });
+  var savedToken = readToken();
+  if (savedToken) setToken(savedToken); else renderAdminIdle();
 
   setInterval(tick, 1000);
   poll();

@@ -5,14 +5,21 @@ set -u
 cd "$(dirname "$0")/.." || exit 1
 PY=.venv/bin/python
 TMP=$(mktemp -d)
-UP=8788
-PX=8787
+UP=${UP:-18788}   # override with UP=... PX=... bash scripts/smoke.sh
+PX=${PX:-18787}
 PASS=0
 FAIL=0
 
 ok()   { echo "  PASS  $1"; PASS=$((PASS + 1)); }
 bad()  { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+
+# Never test somebody else's server: the ports must be free before we start ours.
+for port in $UP $PX; do
+  if curl -s -o /dev/null --max-time 1 "http://127.0.0.1:$port/"; then
+    echo "port $port is already in use; set UP/PX to free ports"; exit 2
+  fi
+done
 
 $PY -m uvicorn demo.mock_upstream:create_mock_app --factory --host 127.0.0.1 --port $UP \
   --log-level warning > "$TMP/upstream.log" 2>&1 &
@@ -26,6 +33,9 @@ for _ in $(seq 1 50); do
   curl -sf "http://127.0.0.1:$PX/healthz" > /dev/null 2>&1 && break
   sleep 0.2
 done
+if ! kill -0 "$PX_PID" 2>/dev/null || ! kill -0 "$UP_PID" 2>/dev/null; then
+  echo "the smoke test proxy or mock model did not start:"; tail -5 "$TMP/proxy.log" "$TMP/upstream.log"; exit 2
+fi
 
 post() {  # post <file> <out-prefix>
   curl -s -D "$TMP/$2.h" -o "$TMP/$2.b" -X POST "http://127.0.0.1:$PX/v1/messages" \

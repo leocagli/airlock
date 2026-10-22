@@ -62,6 +62,14 @@ Settings: `--upstream` / `AIRLOCK_UPSTREAM`, `--audit-log` / `AIRLOCK_AUDIT_LOG`
 
 **Live console:** open http://127.0.0.1:8787/airlock/ui while the proxy runs. It shows the Shield score (requests stopped = REDACT + BLOCK), achievements unlocked only by real events (first block, tool quarantined, rug pull caught, audit chain intact), a live decision feed, the reputation ladder of MCP tools and servers, quarantined tools and the audit chain status. It is one self-contained HTML file with a strict CSP, no external scripts, and every value comes from the proxy's JSON endpoints (`/airlock/stats`, `/airlock/events`, `/airlock/reputation`, `/airlock/audit/verify`).
 
+**Controller (admin):** Airlock decides every request on its own; the controller (a person or an orchestrator) sets the parameters. `serve` prints an admin token once in its own terminal (or takes `AIRLOCK_ADMIN_TOKEN`). Paste it in the console's Controller section, which keeps it for that tab only, or send it as the `x-airlock-admin-token` header. Three controls:
+
+- **Mode** (`POST /airlock/admin/mode`, `{"mode": "strict"}`): strict removes MEDIUM findings in third-party content, blocks HIGH ones and quarantines tools from MEDIUM. `normal` restores the starting policy.
+- **Approve a changed tool** (`POST /airlock/admin/pins/approve`, `{"tool": "mcp__weather__get_forecast"}`): re-pins the latest definition the proxy saw after a rug pull. A poisoned definition is still caught by the other checks.
+- **Pardon** (`POST /airlock/admin/reputation/reset`, `{"subject": "server:calc"}`): sets a tool or server back to its baseline score.
+
+`GET /airlock/admin/state` returns the mode, the active policy, the pins, the changed tools and the reputation book. Without the token every admin call gets 401, and there are no CORS headers, so other websites cannot call it. Each admin action is written to the hash-chained audit log as action, target and result; the token never is.
+
 **Autonomous mode** (rug-pull re-scan, tool reputation, session escalation) wraps the same engine. Today it is enabled from Python; the three-line `AIRLOCK_AUTONOMOUS=1` switch for `serve` is in [docs/AUTONOMY.md](docs/AUTONOMY.md).
 
 ```python
@@ -131,7 +139,7 @@ Both answers came back correctly and the audit chain verified. This run also fou
 
 **2. End-to-end smoke test over HTTP** ([scripts/smoke.sh](scripts/smoke.sh)): real proxy plus a mock model that echoes what it receives. 17 of 17 checks pass: injection stopped and the webhook URL never reaches the model, Anthropic SSE event order on the stream path, poisoned MCP tool quarantined, secret masked and absent upstream, clean request allowed, rug pull caught, passthrough, stats, audit chain verified over HTTP and CLI, no secret or API key in the audit or proxy logs, 413 for bodies over 10 MB.
 
-**3. Test suite:** 398 tests (`pytest -q`), standard library only for the core.
+**3. Test suite:** 424 tests (`pytest -q`), standard library only for the core.
 
 **4. Reputation anchored on the Stellar testnet** ([docs/TESTNET_PROOFS.md](docs/TESTNET_PROOFS.md)). Three wallets: an Airlock operator, an honest MCP server (`mcp__weather`) and a malicious one (`mcp__calc`, the poisoned tool from the demo). Airlock scored them from real traffic (calc fell to 3/100, blocked; weather stayed at 60), built an ERC-8004-shaped feedback document for each (agentId, score, tags, URI, SHA-256 of the evidence) and the operator anchored the document hash on chain (payment memo plus a ManageData entry):
 
@@ -148,7 +156,7 @@ Snyk is a gate inside our own smoke test, not a report we ran once. It intervene
 
 ```mermaid
 flowchart LR
-  A[code change] --> B[pytest: 398 tests]
+  A[code change] --> B[pytest: 424 tests]
   B --> C["scripts/smoke.sh: real proxy + mock model over HTTP (17 checks)"]
   C --> D{"Snyk Code (SAST): any medium or high issue?"}
   D -- yes --> X[smoke test FAILS: fix and rerun]

@@ -70,7 +70,8 @@ SCENES = {
     "mcp": Scene(
         "MCP tool poisoning",
         "requests/02_mcp_poisoning.json",
-        "An MCP server ships 'mcp__calc__add_numbers' whose description orders the model to leak mcp.json.",
+        "An MCP server ships 'mcp__calc__add_numbers' whose description orders the model "
+        "to leak mcp.json.",
         "mcp.json",
     ),
     "secret": Scene(
@@ -253,8 +254,9 @@ class Demo:
             n += 1
             print()
             print(bold(f"[{n}] MCP rug pull"))
-            print(dim(wrap("Monday the mcp__weather__get_forecast tool is harmless and gets pinned. "
-                           "Tuesday the same server silently rewrites its description.", "    ")))
+            print(dim(wrap("Monday the mcp__weather__get_forecast tool is harmless and gets "
+                           "pinned. Tuesday the same server silently rewrites its description.",
+                           "    ")))
             first = await self.send(client, load_request("rugpull_before.json"))
             day1 = act(first.headers.get("x-airlock-action", "?"))
             print(f"    day 1: Airlock {day1} (fingerprint pinned)")
