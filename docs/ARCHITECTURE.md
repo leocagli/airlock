@@ -139,9 +139,9 @@ design states them openly:
 ### 3.1 Origin-aware policy
 The same words mean different things depending on who wrote them. A user
 asking how to defend against "ignore previous instructions" is legitimate; a
-web page saying it to the agent is an attack. ArkivGate scanned only
-user/system text, which produced false positives on security conversations and
-was blind to the actual indirect injection vector (tool results). Airlock keys
+web page saying it to the agent is an attack. A scanner that reads only
+user/system text produces false positives on security conversations and is
+blind to the actual indirect injection vector (tool results). Airlock keys
 the action on `(category, source, severity)`, so trusted sources are never
 blocked for talking about attacks and untrusted sources are never allowed to
 give instructions.

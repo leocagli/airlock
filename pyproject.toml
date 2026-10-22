@@ -1,7 +1,7 @@
 [project]
 name = "airlock"
 version = "0.1.0"
-description = "Airlock: indirect prompt injection and MCP tool-poisoning firewall for LLM agents. Built at the AI Security Hackathon Lisbon 2026, evolved from ArkivGate."
+description = "Airlock: indirect prompt injection and MCP tool-poisoning firewall for LLM agents. Built during the AI Security Hackathon Lisbon 2026."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12"

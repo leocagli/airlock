@@ -209,8 +209,6 @@ Scanners such as Snyk Agent Scan check what you installed, before or between ses
 - **The audit chain** detects edited, reordered or deleted records, but not truncation of the tail without an external anchor.
 - **No benchmark numbers yet.** Evidence today is unit tests, the HTTP smoke test and live Claude Code runs. Measuring detection and false-positive rates on a third-party benchmark such as AgentDojo or InjecAgent is the next step.
 
-## Origin, license, author
+## License
 
-Built at the AI Security Hackathon Lisbon, 2026-10-22. Airlock evolved from the author's earlier ArkivGate project, which scanned only user and system text and was blind to tool results. Everything in this repository was written during the hackathon.
-
-License: MIT. Author: leocagli / Bitcoindefi.
+Built during the AI Security Hackathon Lisbon, 2026-10-22. MIT.
