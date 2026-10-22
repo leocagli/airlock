@@ -42,7 +42,9 @@ from airlock.attest import (  # noqa: E402
 from airlock.policy import HARNESS_POLICY  # noqa: E402
 from airlock.reputation import ReputationAirlock, ReputationBook  # noqa: E402
 
-KEYS = Path(os.environ.get("AIRLOCK_TESTNET_KEYS", "/root/hack/airlock-testnet/keys.json"))
+# Fixed location outside the repository (testnet keys only). Not configurable from the
+# environment on purpose: a path taken from env vars is a path traversal sink (Snyk Code).
+KEYS = Path.home() / "hack" / "airlock-testnet" / "keys.json"
 OUT = ROOT / "docs" / "testnet"
 MD = ROOT / "docs" / "TESTNET_PROOFS.md"
 ROLES = {

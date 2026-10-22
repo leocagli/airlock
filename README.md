@@ -144,18 +144,35 @@ Both verify from Horizon (7 of 7 checks). A copy with the score edited to 95 fai
 
 ## How we use Snyk
 
-Snyk is part of the build, not an afterthought:
+Snyk is a gate inside our own smoke test, not a report we ran once. It intervenes at three points:
 
-- **Snyk Open Source** on the proxy's dependency tree (the core has no dependencies):
-  ```sh
-  pip freeze | grep -iE "^(fastapi|httpx|uvicorn|starlette|pydantic|anyio|h11|httpcore|idna|certifi|sniffio|click)" > requirements-proxy.txt
-  snyk test --file=requirements-proxy.txt --package-manager=pip --command=.venv/bin/python
-  ```
-  Result tonight (Snyk CLI 1.1308.2): **17 dependencies tested, 0 issues, 0 vulnerable paths.**
-- **Snyk Code** (SAST) with `snyk code test`, which requires Snyk Code to be enabled for the organization; the result is recorded in [docs/SECURITY_SCAN.md](docs/SECURITY_SCAN.md).
-- **CI** ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs Snyk Open Source and Snyk Code on every push and pull request when the `SNYK_TOKEN` secret is set, next to pytest, `bandit -r airlock` and `pip-audit`.
-- **Snyk Agent Scan** (formerly `mcp-scan`) is the install-time complement: scan the MCP servers you install, and run Airlock at runtime for what those servers return. Tool pinning by hash is credited to that project.
-- Alongside Snyk: bandit 0 issues, pip-audit 0 vulnerabilities, detect-secrets 0 findings in code and tests (details and exact commands in [docs/SECURITY_SCAN.md](docs/SECURITY_SCAN.md)).
+```mermaid
+flowchart LR
+  A[code change] --> B[pytest: 398 tests]
+  B --> C["scripts/smoke.sh: real proxy + mock model over HTTP (17 checks)"]
+  C --> D{"Snyk Code (SAST): any medium or high issue?"}
+  D -- yes --> X[smoke test FAILS: fix and rerun]
+  D -- no --> E{"Snyk Open Source on the proxy's dependency tree: any medium or high issue?"}
+  E -- yes --> X
+  E -- no --> F[git push]
+  F --> G["CI on every push, PR and nightly: pytest, smoke, bandit, pip-audit, Snyk Open Source, Snyk Code (SNYK_TOKEN)"]
+```
+
+1. **Local smoke test** ([scripts/smoke.sh](scripts/smoke.sh)). After the HTTP checks, two Snyk gates run: `snyk code test --severity-threshold=medium` and `snyk test --file=requirements-proxy.txt --package-manager=pip --severity-threshold=medium`. Exit 0 is PASS, exit 1 (issues found) FAILS the smoke test, anything else (CLI missing, not logged in, no network) is reported as SKIP so contributors without Snyk can still run it.
+2. **CI** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): the same Snyk Open Source and Snyk Code scans on every push, pull request and every night. With the `SNYK_TOKEN` secret they are hard gates; without it they are informational.
+3. **Around Airlock at runtime:** Snyk scans Airlock's own code and dependencies; [Snyk Agent Scan](https://github.com/invariantlabs-ai/mcp-scan) (formerly `mcp-scan`) scans the MCP servers you install; Airlock enforces at runtime on what those servers return. Tool pinning by hash is credited to that project.
+
+**What happened tonight (the loop working):**
+
+| Step | Result |
+|---|---|
+| First `snyk code test` on the full repo | 4 LOW, Path Traversal, all in `scripts/testnet_attest.py`: the testnet key file path came from an environment variable and flowed into `Path`, `os.chmod` and `json.dump` |
+| Fix | the key path is now fixed under the user's home, no environment input ([scripts/testnet_attest.py](scripts/testnet_attest.py)) |
+| Re-scan, all severities | **Snyk Code: 0 issues** |
+| Snyk Open Source (Snyk CLI 1.1308.2) | **17 dependencies, 0 issues, 0 vulnerable paths** |
+| `scripts/smoke.sh` | **19 of 19 pass**, both Snyk gates included |
+
+The `airlock` package itself had no Snyk Code findings at any point. Alongside Snyk: bandit 0 issues, pip-audit 0 vulnerabilities, detect-secrets 0 findings in code and tests (exact commands in [docs/SECURITY_SCAN.md](docs/SECURITY_SCAN.md)).
 
 ## How it was built securely
 

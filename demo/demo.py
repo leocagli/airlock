@@ -297,10 +297,44 @@ class Demo:
             return 1
         print(f"    verify: {c('TAMPERING DETECTED', '1;31;7')} at seq {bad} "
               f"({checked} record(s) still valid)")
+        self.scoreboard(tamper_caught=True)
         print()
         print(dim("Live: python -m airlock serve  then  "
-                  "ANTHROPIC_BASE_URL=http://127.0.0.1:8787 claude"))
+                  "ANTHROPIC_BASE_URL=http://127.0.0.1:8787 claude   (console: /airlock/ui)"))
         return 0
+
+    def scoreboard(self, tamper_caught: bool) -> None:
+        """Gamified summary computed only from this run's real audit records."""
+        text = self.audit_path.read_text(encoding="utf-8")
+        recs = [json.loads(ln) for ln in text.splitlines() if ln.strip()]
+        actions = [r.get("action") for r in recs]
+        rules = {f.get("rule_id", "") for r in recs for f in r.get("findings", [])}
+        quarantined = {t for r in recs for t in (r.get("quarantined_tools") or [])}
+        chain_ok, _, _ = verify(str(self.audit_path))
+        points = (50 * actions.count("BLOCK") + 30 * actions.count("REDACT")
+                  + 5 * actions.count("WARN"))
+        badges = [
+            ("Injection stopped", any(r.startswith(("INJ-", "HID-", "EXF-")) for r in rules)),
+            ("Tool quarantined", bool(quarantined)),
+            ("Rug pull hunter", "TOOL-RUGPULL" in rules),
+            ("Secret keeper", any(r.startswith("SEC-") for r in rules)),
+            ("Chain of custody", chain_ok),
+            ("Tamper proof", tamper_caught),
+        ]
+        bonus = 20 * sum(1 for _, won in badges if won)
+        total = points + bonus
+        levels = ((300, "DIAMOND"), (200, "GOLD"), (120, "SILVER"), (0, "BRONZE"))
+        level = next(name for limit, name in levels if total >= limit)
+        print()
+        print(bold("[*] Shield report"))
+        print(f"    score {c(str(total), '1;36')}  ({points} from {len(recs)} decisions"
+              f" + {bonus} badge bonus)   level {c(level, '1;33')}")
+        print(f"    [{'#' * min(40, total // 10):<40}]")
+        for name, won in badges:
+            state = c("unlocked", "1;32") if won else dim("locked")
+            print(f"    {'*' if won else ' '} {name:<18} {state}")
+        print(dim("    BLOCK 50, REDACT 30, WARN 5, badge 20. Read from the audit log, "
+                  "nothing invented."))
 
 
 def main(argv: list[str] | None = None) -> int:

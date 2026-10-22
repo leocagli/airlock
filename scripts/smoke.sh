@@ -92,6 +92,28 @@ C413=$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:$PX/v1/m
   -H 'content-type: application/json' --data-binary @"$TMP/big.bin")
 check "oversized body rejected (413)" "[ \"$C413\" = 413 ]"
 
+echo "== Snyk (security gate; runs when the Snyk CLI is installed and logged in)"
+SKIP=0
+snyk_gate() {  # snyk_gate <label> <command...>; exit 0 pass, 1 issues, other: skip
+  local label=$1; shift
+  "$@" > "$TMP/snyk.out" 2>&1
+  case $? in
+    0) ok "$label" ;;
+    1) bad "$label"; grep -E "\[(HIGH|MEDIUM)\]|Open issues|Total security issues" "$TMP/snyk.out" | head -5 ;;
+    *) echo "  SKIP  $label ($(grep -m1 -oE 'SNYK-[A-Z]+-[0-9]+[^)]*\)?|not enabled|Network[^.]*' "$TMP/snyk.out" || echo 'Snyk unavailable'))"
+       SKIP=$((SKIP + 1)) ;;
+  esac
+}
+if command -v snyk > /dev/null 2>&1; then
+  snyk_gate "Snyk Code: no medium or high issues" \
+    snyk code test --severity-threshold=medium
+  snyk_gate "Snyk Open Source: no medium or high issues in proxy deps" \
+    snyk test --file=requirements-proxy.txt --package-manager=pip --command="$PY" --severity-threshold=medium
+else
+  echo "  SKIP  Snyk CLI not installed (npm install -g snyk && snyk auth)"
+  SKIP=$((SKIP + 1))
+fi
+
 echo
-echo "SMOKE: $PASS passed, $FAIL failed"
+echo "SMOKE: $PASS passed, $FAIL failed, $SKIP skipped"
 [ "$FAIL" -eq 0 ]

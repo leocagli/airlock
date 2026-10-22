@@ -179,13 +179,16 @@ In CI, add the `SNYK_TOKEN` repository secret: the Snyk open source and Snyk
 Code steps in `.github/workflows/ci.yml` then become hard gates instead of
 informational steps.
 
-## Snyk (run 2026-10-22, 19:59 Lisbon, Snyk CLI 1.1308.2, organization `leocagli`)
+## Snyk results (2026-10-22, Snyk CLI 1.1308.2, organization `leocagli`)
+
+The section above was written before the Snyk login; these are the scans that then ran.
 
 | Scan | Command | Result |
 |---|---|---|
 | Snyk Open Source | `snyk test --file=requirements-proxy.txt --package-manager=pip --command=.venv/bin/python` | 17 dependencies tested, 0 issues, 0 vulnerable paths |
-| Snyk Code (SAST) | `snyk code test --severity-threshold=low` | Not run: the API answered SNYK-CODE-0005 (403, Snyk Code not enabled for the organization). Enable it under the organization settings and rerun; CI runs it automatically once the `SNYK_TOKEN` secret is set. |
+| Snyk Code, first run | `snyk code test` | 4 LOW (Path Traversal) in `scripts/testnet_attest.py`: a key file path read from an environment variable reached `Path`, `os.chmod` and `json.dump`. 0 findings in the `airlock` package. |
+| Fix | key path fixed under the user's home, no environment input | |
+| Snyk Code, re-scan | `snyk code test` (all severities) | 0 issues |
+| Smoke test with Snyk gates | `bash scripts/smoke.sh` | 19 of 19 pass (17 HTTP checks + Snyk Code + Snyk Open Source) |
 
-`requirements-proxy.txt` pins the proxy's runtime dependency tree (the core has no
-dependencies). Static analysis evidence for tonight's build comes from bandit (0 issues) until
-Snyk Code is enabled.
+`requirements-proxy.txt` pins the proxy's runtime dependency tree; the core has no dependencies.
