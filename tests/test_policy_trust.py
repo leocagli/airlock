@@ -96,7 +96,10 @@ def test_harness_session_is_not_stuck_after_a_poisoned_tool_result():
                     "input": {"url": "https://x.dev"},
                 }
             ]},
-            {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t1", "content": page}]},
+            {
+                "role": "user",
+                "content": [{"type": "tool_result", "tool_use_id": "t1", "content": page}],
+            },
         ],
     }
     turn2 = {**turn1, "messages": [
