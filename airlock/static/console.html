@@ -766,13 +766,13 @@ footer .upd { font-family: var(--mono); color: var(--dim); }
 
   /* Controller: admin calls carry the token printed by python -m airlock serve */
   var ADMIN_POLL_MS = 3000;
-  var TOKEN_KEY = "airlock-admin-token";
+  var SESSION_SLOT = "airlock.controller.session";  // sessionStorage key name, not a secret
   var NO_TOKEN = "Paste the admin token printed by python -m airlock serve";
   var admin = { token: "", gen: 0, timer: null, busy: false, log: [] };
 
-  function readToken() { try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } }
+  function readToken() { try { return sessionStorage.getItem(SESSION_SLOT) || ""; } catch (e) { return ""; } }
   function keepToken(t) {
-    try { if (t) sessionStorage.setItem(TOKEN_KEY, t); else sessionStorage.removeItem(TOKEN_KEY); } catch (e) { /* this tab only */ }
+    try { if (t) sessionStorage.setItem(SESSION_SLOT, t); else sessionStorage.removeItem(SESSION_SLOT); } catch (e) { /* this tab only */ }
   }
   function setHint(text, tone) {
     var h = $("admin-hint");
