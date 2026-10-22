@@ -1,0 +1,38 @@
+{
+  "agent": "GD7NGL6PVFECHYLD5JVAIFY4UDHYH6AI23SERPNXR23Y22QND4NVOXEQ",
+  "agentId": 1,
+  "audit_head": null,
+  "evidence": {
+    "agent_id": 1,
+    "generated_at": "2026-10-22T18:51:15Z",
+    "incidents": {
+      "by_action": {
+        "REDACT": 3,
+        "WARN": 3
+      },
+      "by_category": {
+        "tool_poisoning": 6
+      },
+      "total": 6
+    },
+    "last_trace_ids": [
+      "poison-3",
+      "poison-2",
+      "poison-1"
+    ],
+    "level": "blocked",
+    "registry": "stellar:testnet:GD7NGL6PVFECHYLD5JVAIFY4UDHYH6AI23SERPNXR23Y22QND4NVOXEQ",
+    "schema": "airlock.reputation.v1",
+    "score": 3,
+    "subject": "server:calc"
+  },
+  "filehash": "585895412602e53837e93830e6c3288590ac52861ec26e8f4ec20a19b7ee1c18",
+  "fileuri": "airlock://audit/server:calc",
+  "network": "stellar:testnet",
+  "operator": "GBJNONIIWQHX2H656D5NW6GXWINFVCVFYKNKGVYATXPYPCS4PVDTQCWI",
+  "schema": "airlock.reputation.v1 (ERC-8004 feedback shape)",
+  "score": 3,
+  "subject": "server:calc",
+  "tag1": "airlock",
+  "tag2": "tool_poisoning"
+}

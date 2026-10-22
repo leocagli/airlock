@@ -1,0 +1,288 @@
+{
+  "attestations": {
+    "calc": {
+      "created_at": "2026-10-22T18:51:22Z",
+      "data_key": "airlock:rep:GD7NGL6P",
+      "doc_hash": "312685ea344fdda4eabe3c07821ec171d78e21fdf1c11495d43adf65e36e01b3",
+      "explorer": "https://stellar.expert/explorer/testnet/tx/e901ddd3b4d1a09555591f7e80660e12b308832e83e6d3db18ef8a435e81c7bc",
+      "file": "docs/testnet/attestation-calc.json",
+      "ledger": 5334299,
+      "level": "blocked",
+      "score": 3,
+      "subject": "server:calc",
+      "tx_hash": "e901ddd3b4d1a09555591f7e80660e12b308832e83e6d3db18ef8a435e81c7bc",
+      "verification": {
+        "checks": {
+          "data_entry_is_doc_hash": true,
+          "evidence_consistent": true,
+          "found": true,
+          "memo_is_doc_hash": true,
+          "payment_to_agent": true,
+          "source_is_operator": true,
+          "successful": true
+        },
+        "created_at": "2026-10-22T18:51:22Z",
+        "doc_hash_hex": "312685ea344fdda4eabe3c07821ec171d78e21fdf1c11495d43adf65e36e01b3",
+        "ledger": 5334299,
+        "memo_hash_hex": "312685ea344fdda4eabe3c07821ec171d78e21fdf1c11495d43adf65e36e01b3",
+        "ok": true,
+        "tx_hash": "e901ddd3b4d1a09555591f7e80660e12b308832e83e6d3db18ef8a435e81c7bc"
+      }
+    },
+    "weather": {
+      "created_at": "2026-10-22T18:51:27Z",
+      "data_key": "airlock:rep:GDLWAPCS",
+      "doc_hash": "0b950f9d052430985e1583bb473d52bcf4775925309a9a37b77a364b5e11bed5",
+      "explorer": "https://stellar.expert/explorer/testnet/tx/243ec8606261678d4b045abfd5658a1d0f8a8359ad739b66e53421f2294d1e06",
+      "file": "docs/testnet/attestation-weather.json",
+      "ledger": 5334300,
+      "level": "neutral",
+      "score": 60,
+      "subject": "server:weather",
+      "tx_hash": "243ec8606261678d4b045abfd5658a1d0f8a8359ad739b66e53421f2294d1e06",
+      "verification": {
+        "checks": {
+          "data_entry_is_doc_hash": true,
+          "evidence_consistent": true,
+          "found": true,
+          "memo_is_doc_hash": true,
+          "payment_to_agent": true,
+          "source_is_operator": true,
+          "successful": true
+        },
+        "created_at": "2026-10-22T18:51:27Z",
+        "doc_hash_hex": "0b950f9d052430985e1583bb473d52bcf4775925309a9a37b77a364b5e11bed5",
+        "ledger": 5334300,
+        "memo_hash_hex": "0b950f9d052430985e1583bb473d52bcf4775925309a9a37b77a364b5e11bed5",
+        "ok": true,
+        "tx_hash": "243ec8606261678d4b045abfd5658a1d0f8a8359ad739b66e53421f2294d1e06"
+      }
+    }
+  },
+  "bindings": {
+    "server:calc": {
+      "agent_id": 1,
+      "agent_wallet": "GD7NGL6PVFECHYLD5JVAIFY4UDHYH6AI23SERPNXR23Y22QND4NVOXEQ"
+    },
+    "server:weather": {
+      "agent_id": 2,
+      "agent_wallet": "GDLWAPCSMRQDMIGJ52J4HS6GSAQQX5XGV6XDGZTLA2PABDFJYLCBSLYS"
+    }
+  },
+  "finished_at": "2026-10-22T18:51:40Z",
+  "horizon": "https://horizon-testnet.stellar.org",
+  "network": "stellar:testnet",
+  "reputation_from_ledger": {
+    "fresh_scores": {
+      "server:calc": {
+        "level": "blocked",
+        "score": 3,
+        "source": "stellar:testnet"
+      },
+      "server:weather": {
+        "level": "neutral",
+        "score": 60,
+        "source": "stellar:testnet"
+      }
+    },
+    "poisoned_request": {
+      "fresh_without_seed": {
+        "forwarded_tools": [
+          "mcp__weather__get_weather"
+        ],
+        "quarantined_tools": [
+          "mcp__calc__add_numbers"
+        ],
+        "reputation_flag": false,
+        "rules": [
+          "TOOL-EXFIL-PARAM",
+          "TOOL-POISON-DIRECTIVE"
+        ]
+      },
+      "seeded_from_chain": {
+        "forwarded_tools": [
+          "mcp__weather__get_weather"
+        ],
+        "quarantined_tools": [
+          "mcp__calc__add_numbers"
+        ],
+        "reputation_flag": true,
+        "rules": [
+          "REP-LOW-SCORE",
+          "TOOL-EXFIL-PARAM",
+          "TOOL-POISON-DIRECTIVE"
+        ]
+      }
+    },
+    "same_server_clean_looking_tool": {
+      "fresh_without_seed": {
+        "forwarded_tools": [
+          "mcp__calc__add_numbers",
+          "mcp__weather__get_weather"
+        ],
+        "quarantined_tools": [],
+        "reputation_flag": false,
+        "rules": []
+      },
+      "seeded_from_chain": {
+        "forwarded_tools": [
+          "mcp__weather__get_weather"
+        ],
+        "quarantined_tools": [
+          "mcp__calc__add_numbers"
+        ],
+        "reputation_flag": true,
+        "rules": [
+          "REP-LOW-SCORE"
+        ]
+      }
+    },
+    "seed_reports": [
+      {
+        "document": "tampered copy (score 95)",
+        "failed_checks": [
+          "memo_is_doc_hash",
+          "data_entry_is_doc_hash"
+        ],
+        "ok": false,
+        "seeded": false,
+        "subject": "server:calc",
+        "tx_hash": "e901ddd3b4d1a09555591f7e80660e12b308832e83e6d3db18ef8a435e81c7bc"
+      },
+      {
+        "document": "attestation-calc.json",
+        "failed_checks": [],
+        "ok": true,
+        "seeded": true,
+        "subject": "server:calc",
+        "tx_hash": "e901ddd3b4d1a09555591f7e80660e12b308832e83e6d3db18ef8a435e81c7bc"
+      },
+      {
+        "document": "attestation-weather.json",
+        "failed_checks": [],
+        "ok": true,
+        "seeded": true,
+        "subject": "server:weather",
+        "tx_hash": "243ec8606261678d4b045abfd5658a1d0f8a8359ad739b66e53421f2294d1e06"
+      }
+    ]
+  },
+  "started_at": "2026-10-22T18:51:13Z",
+  "tamper_test": {
+    "changed": "score -> 95 in a copy of attestation-calc.json (not published)",
+    "checks": {
+      "data_entry_is_doc_hash": false,
+      "evidence_consistent": true,
+      "found": true,
+      "memo_is_doc_hash": false,
+      "payment_to_agent": true,
+      "source_is_operator": true,
+      "successful": true
+    },
+    "doc_hash": "254ff77c87a40f88ac931198cae1c62d2996e051c5c80335964dfc0588942323",
+    "memo_hash": "312685ea344fdda4eabe3c07821ec171d78e21fdf1c11495d43adf65e36e01b3",
+    "ok": false
+  },
+  "traffic": {
+    "rounds": [
+      {
+        "calc_score": 41,
+        "forwarded_tools": [
+          "mcp__weather__get_weather",
+          "mcp__weather__get_forecast"
+        ],
+        "quarantined_tools": [
+          "mcp__calc__add_numbers"
+        ],
+        "reputation_flag": false,
+        "request": "02_mcp_poisoning #1",
+        "rules": [
+          "TOOL-EXFIL-PARAM",
+          "TOOL-POISON-DIRECTIVE"
+        ]
+      },
+      {
+        "calc_score": 22,
+        "forwarded_tools": [
+          "mcp__weather__get_weather",
+          "mcp__weather__get_forecast"
+        ],
+        "quarantined_tools": [
+          "mcp__calc__add_numbers"
+        ],
+        "reputation_flag": false,
+        "request": "02_mcp_poisoning #2",
+        "rules": [
+          "TOOL-EXFIL-PARAM",
+          "TOOL-POISON-DIRECTIVE"
+        ]
+      },
+      {
+        "calc_score": 3,
+        "forwarded_tools": [
+          "mcp__weather__get_forecast",
+          "mcp__weather__get_weather"
+        ],
+        "quarantined_tools": [
+          "mcp__calc__add_numbers"
+        ],
+        "reputation_flag": true,
+        "request": "02_mcp_poisoning #3",
+        "rules": [
+          "REP-LOW-SCORE",
+          "TOOL-EXFIL-PARAM",
+          "TOOL-POISON-DIRECTIVE"
+        ]
+      }
+    ],
+    "scores": {
+      "server:calc": {
+        "agent_id": 1,
+        "baseline": 60,
+        "incidents": 6,
+        "level": "blocked",
+        "registry": "stellar:testnet:GD7NGL6PVFECHYLD5JVAIFY4UDHYH6AI23SERPNXR23Y22QND4NVOXEQ",
+        "score": 3,
+        "source": "local"
+      },
+      "server:weather": {
+        "agent_id": 2,
+        "baseline": 60,
+        "incidents": 0,
+        "level": "neutral",
+        "registry": "stellar:testnet:GDLWAPCSMRQDMIGJ52J4HS6GSAQQX5XGV6XDGZTLA2PABDFJYLCBSLYS",
+        "score": 60,
+        "source": "local"
+      },
+      "tool:mcp__calc__add_numbers": {
+        "agent_id": null,
+        "baseline": 60,
+        "incidents": 6,
+        "level": "blocked",
+        "registry": null,
+        "score": 3,
+        "source": "local"
+      }
+    }
+  },
+  "wallets": {
+    "agent_bad": {
+      "explorer": "https://stellar.expert/explorer/testnet/account/GD7NGL6PVFECHYLD5JVAIFY4UDHYH6AI23SERPNXR23Y22QND4NVOXEQ",
+      "funded_by_friendbot_this_run": false,
+      "public_key": "GD7NGL6PVFECHYLD5JVAIFY4UDHYH6AI23SERPNXR23Y22QND4NVOXEQ",
+      "role": "MCP server mcp__calc (ships the poisoned tool)"
+    },
+    "agent_good": {
+      "explorer": "https://stellar.expert/explorer/testnet/account/GDLWAPCSMRQDMIGJ52J4HS6GSAQQX5XGV6XDGZTLA2PABDFJYLCBSLYS",
+      "funded_by_friendbot_this_run": false,
+      "public_key": "GDLWAPCSMRQDMIGJ52J4HS6GSAQQX5XGV6XDGZTLA2PABDFJYLCBSLYS",
+      "role": "honest MCP server mcp__weather"
+    },
+    "operator": {
+      "explorer": "https://stellar.expert/explorer/testnet/account/GBJNONIIWQHX2H656D5NW6GXWINFVCVFYKNKGVYATXPYPCS4PVDTQCWI",
+      "funded_by_friendbot_this_run": false,
+      "public_key": "GBJNONIIWQHX2H656D5NW6GXWINFVCVFYKNKGVYATXPYPCS4PVDTQCWI",
+      "role": "Airlock operator (signs attestations)"
+    }
+  }
+}

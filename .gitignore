@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+!.env.example
+*.egg-info/
+airlock-audit.jsonl
+airlock-fingerprints.json

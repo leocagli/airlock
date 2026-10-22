@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Airlock Console</title>
+<style>
+:root {
+  --bg0: #0d0f2c; --bg1: #181c4a; --panel: #15193f; --panel2: #1a1f4d; --border: #404ea0;
+  --line: rgba(64, 78, 160, .42);
+  --text: #e9ecff; --muted: #9aa3d9; --dim: #6a72a6;
+  --teal: #19cdb9; --cyan: #5ad2ff; --amber: #ffb548; --red: #ff4e60;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  min-height: 100vh; color: var(--text); font: 14px/1.45 var(--sans);
+  background: var(--bg0) linear-gradient(155deg, var(--bg0) 0%, #12153a 48%, var(--bg1) 100%) fixed;
+  -webkit-font-smoothing: antialiased;
+}
+.facets { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.facets polygon { stroke: #5ad2ff; stroke-opacity: .05; stroke-width: 1; }
+.wrap { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 16px 24px 20px; }
+
+/* Header */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.logo { flex: none; filter: drop-shadow(0 0 10px rgba(25, 205, 185, .35)); }
+.wordmark { font-weight: 800; font-size: 24px; letter-spacing: .32em; line-height: 1.05; }
+.tagline { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.status { display: flex; align-items: center; gap: 14px; flex: none; }
+.uptime { color: var(--muted); font-size: 13px; text-align: right; }
+.uptime .v { color: var(--text); font-family: var(--mono); font-size: 14px; margin-left: 4px; }
+.uptime .since { display: block; font-size: 11px; color: var(--dim); }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
+  font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+  border: 1px solid var(--border); background: rgba(21, 25, 63, .9);
+}
+.pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dim); }
+.pill.on { color: var(--teal); border-color: rgba(25, 205, 185, .6); }
+.pill.on .dot { background: var(--teal); box-shadow: 0 0 0 0 rgba(25, 205, 185, .7); animation: beacon 2s infinite; }
+.pill.off { color: var(--red); border-color: rgba(255, 78, 96, .7); }
+.pill.off .dot { background: var(--red); }
+.pill.wait { color: var(--muted); }
+@keyframes beacon { 0% { box-shadow: 0 0 0 0 rgba(25, 205, 185, .65); } 70% { box-shadow: 0 0 0 8px rgba(25, 205, 185, 0); } 100% { box-shadow: 0 0 0 0 rgba(25, 205, 185, 0); } }
+
+.banner {
+  margin: 0 0 12px; padding: 9px 14px; border-radius: 10px; font-weight: 600;
+  color: #ffd9dd; background: rgba(255, 78, 96, .14); border: 1px solid rgba(255, 78, 96, .55);
+}
+body.offline .live { opacity: .5; filter: saturate(.5); transition: opacity .3s; }
+
+/* Panels */
+.panel {
+  background: linear-gradient(180deg, rgba(27, 32, 80, .96), rgba(21, 25, 63, .96));
+  border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px;
+  box-shadow: 0 10px 30px rgba(5, 6, 25, .45), inset 0 1px 0 rgba(90, 210, 255, .06);
+  min-width: 0;
+}
+.ph { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.h { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); }
+.h.small { font-size: 11px; color: var(--muted); }
+.muted { color: var(--muted); font-size: 12px; }
+.small { font-size: 12px; }
+.empty { color: var(--dim); font-style: italic; padding: 10px 2px; list-style: none; }
+
+/* Shield */
+.shield { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; margin-bottom: 14px; }
+.shield-card {
+  position: relative; padding: 4px 18px 4px 2px; border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.score-row { display: flex; align-items: baseline; gap: 10px; }
+.score {
+  font-size: 64px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, var(--teal), var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.score-unit { color: var(--muted); font-size: 14px; font-weight: 600; }
+.formula {
+  font-family: var(--mono); font-size: 12px; color: var(--cyan); cursor: help;
+  border: 1px dashed rgba(90, 210, 255, .45); border-radius: 6px; padding: 3px 8px; align-self: flex-start;
+}
+.dist { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: rgba(64, 78, 160, .35); margin-top: 6px; }
+.dist span { flex: 0 1 0; min-width: 0; transition: flex-grow .6s ease; }
+.dist .allow { background: var(--teal); } .dist .warn { background: var(--cyan); }
+.dist .redact { background: var(--amber); } .dist .block { background: var(--red); }
+.meta { color: var(--muted); font-size: 12px; }
+.meta b { color: var(--text); font-family: var(--mono); font-weight: 600; }
+
+.shield-right { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.tile {
+  --c: var(--teal); position: relative; overflow: hidden; border-radius: 12px; padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c) 16%, transparent), rgba(21, 25, 63, .4) 70%);
+}
+.tile::after {
+  content: ""; position: absolute; right: -14px; top: -14px; width: 56px; height: 56px; opacity: .18;
+  background: var(--c); clip-path: polygon(50% 0, 100% 100%, 0 70%);
+}
+.tile.allow { --c: var(--teal); } .tile.warn { --c: var(--cyan); }
+.tile.redact { --c: var(--amber); } .tile.block { --c: var(--red); }
+.t-name { font-size: 11px; font-weight: 800; letter-spacing: .16em; color: var(--c); }
+.t-val { font-size: 34px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.t-cap { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile.pulse { animation: pulse 1.1s ease-out; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 80%, transparent); transform: scale(1); }
+  25% { transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 16px transparent; transform: scale(1); }
+}
+
+.badges-head { display: flex; align-items: baseline; justify-content: space-between; }
+.badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.badge {
+  --c: var(--dim); display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 10px;
+  border: 1px dashed rgba(106, 114, 166, .55); background: rgba(13, 15, 44, .35); min-width: 0;
+}
+.badge .gem { width: 26px; height: 26px; flex: none; fill: var(--dim); opacity: .45; }
+.badge .gem .g2 { fill-opacity: .7; } .badge .gem .g3 { fill-opacity: .45; }
+.b-text { min-width: 0; flex: 1; }
+.b-name { font-weight: 700; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b-rule { font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b-state { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); flex: none; }
+.badge.on { border-style: solid; border-color: color-mix(in srgb, var(--c) 70%, transparent); background: color-mix(in srgb, var(--c) 12%, rgba(21, 25, 63, .6)); }
+.badge.on .gem { fill: var(--c); opacity: 1; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 70%, transparent)); }
+.badge.on .b-name { color: var(--text); } .badge.on .b-rule { color: var(--muted); } .badge.on .b-state { color: var(--c); }
+.badge.pop { animation: pop .9s ease-out; }
+@keyframes pop { 0% { transform: scale(.9); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.badge[data-tone="red"] { --c: var(--red); } .badge[data-tone="amber"] { --c: var(--amber); }
+.badge[data-tone="teal"] { --c: var(--teal); } .badge[data-tone="cyan"] { --c: var(--cyan); }
+.badge:not(.on) { --c: var(--dim); }
+
+/* Main grid */
+.grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+
+/* Feed */
+.feed-head, .row {
+  display: grid; grid-template-columns: 62px 74px minmax(0, 1.7fr) minmax(0, 1fr) 46px; gap: 10px; align-items: center;
+}
+.feed-head { padding: 0 10px 6px; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); }
+.r { text-align: right; }
+.feed { list-style: none; margin: 0; padding: 4px 0 0; max-height: 470px; overflow-y: auto; }
+.row { padding: 8px 10px; border-radius: 9px; border-bottom: 1px solid rgba(64, 78, 160, .22); }
+.row:hover { background: rgba(64, 78, 160, .18); }
+.row.new { animation: slide .7s ease-out; }
+@keyframes slide {
+  0% { opacity: 0; transform: translateY(-10px); background: rgba(90, 210, 255, .22); }
+  60% { opacity: 1; transform: none; }
+  100% { background: transparent; }
+}
+.time { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.chip {
+  --c: var(--dim); display: inline-block; text-align: center; padding: 2px 0; width: 70px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: .08em; color: var(--c);
+  border: 1px solid color-mix(in srgb, var(--c) 65%, transparent); background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.chip.allow { --c: var(--teal); } .chip.warn { --c: var(--cyan); }
+.chip.redact { --c: var(--amber); } .chip.block { --c: var(--red); }
+.rules { display: flex; flex-wrap: wrap; gap: 4px 5px; min-width: 0; }
+.rule {
+  font-family: var(--mono); font-size: 11.5px; padding: 1px 6px; border-radius: 5px; white-space: nowrap;
+  background: rgba(13, 15, 44, .6); border: 1px solid rgba(64, 78, 160, .7); color: #cfd6ff;
+  overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.more { font-size: 11px; color: var(--muted); align-self: center; white-space: nowrap; }
+.src { min-width: 0; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.src .tool { font-family: var(--mono); color: var(--cyan); }
+.ms { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--muted); }
+.none { color: var(--dim); font-size: 12px; }
+
+/* Reputation */
+.rep { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; max-height: 260px; overflow-y: auto; }
+.rep-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) 40px 92px; gap: 8px; align-items: center; }
+.rank { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.who { min-width: 0; }
+.subj { font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track { height: 7px; border-radius: 4px; background: rgba(64, 78, 160, .35); overflow: hidden; margin-top: 3px; }
+.fill { height: 100%; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 55%, transparent), var(--c)); border-radius: 4px; transition: width .6s ease; }
+.lvl-trusted { --c: var(--teal); } .lvl-neutral { --c: var(--cyan); }
+.lvl-suspicious { --c: var(--amber); } .lvl-blocked { --c: var(--red); }
+.sc { font-family: var(--mono); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.lvl {
+  text-align: center; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  padding: 3px 0; border-radius: 6px; color: var(--c);
+  border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 13%, transparent);
+}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; background: var(--c); display: inline-block; }
+
+/* Quarantine and audit */
+.qlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 170px; overflow-y: auto; }
+.qitem {
+  display: flex; align-items: center; gap: 8px; padding: 6px 9px; border-radius: 8px; min-width: 0;
+  border: 1px solid rgba(255, 181, 72, .55); background: rgba(255, 181, 72, .1);
+}
+.qitem::before { content: ""; width: 9px; height: 9px; flex: none; background: var(--amber); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.qname { font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audit-state { font-size: 26px; font-weight: 800; letter-spacing: .04em; color: var(--muted); }
+.audit-state.ok { color: var(--teal); text-shadow: 0 0 18px rgba(25, 205, 185, .35); }
+.audit-state.bad { color: var(--red); text-shadow: 0 0 18px rgba(255, 78, 96, .35); }
+.audit-num { font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
+.audit-num b { font-family: var(--mono); color: var(--text); font-size: 15px; }
+
+footer {
+  margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px;
+}
+footer .upd { font-family: var(--mono); color: var(--dim); }
+
+@media (max-width: 1100px) {
+  .shield { grid-template-columns: 260px minmax(0, 1fr); }
+  .score { font-size: 54px; }
+  .b-state { display: none; }
+}
+@media (max-width: 980px) {
+  .shield, .grid { grid-template-columns: minmax(0, 1fr); }
+  .shield-card { border-right: 0; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  .badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .top { flex-wrap: wrap; }
+}
+@media (max-width: 640px) {
+  .wrap { padding: 12px 16px; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .badges, .pair { grid-template-columns: minmax(0, 1fr); }
+  .feed-head { display: none; }
+  .row { grid-template-columns: 62px 74px minmax(0, 1fr); }
+  .row .src, .row .ms { grid-column: 3; }
+  footer { flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<svg class="facets" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <polygon points="0,0 420,0 0,320" fill="#404ea0" fill-opacity=".10"/>
+  <polygon points="420,0 360,280 0,320" fill="#5ad2ff" fill-opacity=".03"/>
+  <polygon points="420,0 800,0 360,280" fill="#404ea0" fill-opacity=".06"/>
+  <polygon points="800,0 830,350 360,280" fill="#19cdb9" fill-opacity=".025"/>
+  <polygon points="800,0 1210,0 830,350" fill="#404ea0" fill-opacity=".09"/>
+  <polygon points="1210,0 1180,260 830,350" fill="#5ad2ff" fill-opacity=".035"/>
+  <polygon points="1210,0 1600,0 1180,260" fill="#404ea0" fill-opacity=".12"/>
+  <polygon points="1600,0 1600,300 1180,260" fill="#19cdb9" fill-opacity=".03"/>
+  <polygon points="0,320 360,280 0,610" fill="#19cdb9" fill-opacity=".02"/>
+  <polygon points="360,280 440,640 0,610" fill="#404ea0" fill-opacity=".08"/>
+  <polygon points="360,280 830,350 440,640" fill="#5ad2ff" fill-opacity=".025"/>
+  <polygon points="830,350 760,580 440,640" fill="#404ea0" fill-opacity=".1"/>
+  <polygon points="830,350 1180,260 760,580" fill="#404ea0" fill-opacity=".05"/>
+  <polygon points="1180,260 1240,660 760,580" fill="#5ad2ff" fill-opacity=".03"/>
+  <polygon points="1180,260 1600,300 1240,660" fill="#404ea0" fill-opacity=".09"/>
+  <polygon points="1600,300 1600,620 1240,660" fill="#19cdb9" fill-opacity=".03"/>
+  <polygon points="0,610 440,640 0,900" fill="#404ea0" fill-opacity=".12"/>
+  <polygon points="440,640 390,900 0,900" fill="#5ad2ff" fill-opacity=".03"/>
+  <polygon points="440,640 760,580 390,900" fill="#404ea0" fill-opacity=".07"/>
+  <polygon points="760,580 820,900 390,900" fill="#19cdb9" fill-opacity=".025"/>
+  <polygon points="760,580 1240,660 820,900" fill="#404ea0" fill-opacity=".11"/>
+  <polygon points="1240,660 1190,900 820,900" fill="#5ad2ff" fill-opacity=".03"/>
+  <polygon points="1240,660 1600,620 1190,900" fill="#404ea0" fill-opacity=".06"/>
+  <polygon points="1600,620 1600,900 1190,900" fill="#404ea0" fill-opacity=".13"/>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 44" width="36" height="40" aria-hidden="true">
+        <polygon points="20,2 38,9 20,22" fill="#5ad2ff"/>
+        <polygon points="20,2 2,9 20,22" fill="#19cdb9"/>
+        <polygon points="2,9 5,30 20,22" fill="#14a898"/>
+        <polygon points="38,9 35,30 20,22" fill="#3aa6d8"/>
+        <polygon points="5,30 20,42 20,22" fill="#0f7f86"/>
+        <polygon points="35,30 20,42 20,22" fill="#2a6fb0"/>
+      </svg>
+      <div>
+        <div class="wordmark">AIRLOCK</div>
+        <div class="tagline">Untrusted content goes through the airlock first</div>
+      </div>
+    </div>
+    <div class="status">
+      <div class="uptime"><span class="k">Uptime</span><span id="uptime" class="v">--</span><span id="since" class="since"></span></div>
+      <div id="pill" class="pill wait" role="status"><span class="dot"></span><span id="status-text">Connecting</span></div>
+    </div>
+  </header>
+
+  <div id="offline" class="banner" role="alert" hidden>Proxy offline. Retrying every 2 seconds; the values below are the last ones received.</div>
+
+  <main class="live">
+    <section class="panel shield" aria-labelledby="h-shield">
+      <div class="shield-card">
+        <h2 id="h-shield" class="h">Shield</h2>
+        <div class="score-row"><span id="shield-score" class="score">--</span><span class="score-unit">attacks stopped</span></div>
+        <div class="formula" title="Shield score = REDACT + BLOCK decisions reported by /airlock/stats since the proxy started. Nothing is estimated.">Shield = REDACT + BLOCK</div>
+        <div id="dist" class="dist" title="Share of inspected requests by action: ALLOW, WARN, REDACT, BLOCK" aria-hidden="true">
+          <span id="dist-ALLOW" class="allow"></span><span id="dist-WARN" class="warn"></span><span id="dist-REDACT" class="redact"></span><span id="dist-BLOCK" class="block"></span>
+        </div>
+        <div class="meta"><b id="shield-requests">--</b> inspected, <b id="meta-passthrough">--</b> passthrough, <b id="meta-errors">--</b> errors</div>
+      </div>
+      <div class="shield-right">
+        <div class="tiles">
+          <div id="tile-ALLOW" class="tile allow"><div class="t-name">ALLOW</div><div id="count-ALLOW" class="t-val">--</div><div class="t-cap">forwarded unchanged</div></div>
+          <div id="tile-WARN" class="tile warn"><div class="t-name">WARN</div><div id="count-WARN" class="t-val">--</div><div class="t-cap">forwarded and flagged</div></div>
+          <div id="tile-REDACT" class="tile redact"><div class="t-name">REDACT</div><div id="count-REDACT" class="t-val">--</div><div class="t-cap">sanitized, then forwarded</div></div>
+          <div id="tile-BLOCK" class="tile block"><div class="t-name">BLOCK</div><div id="count-BLOCK" class="t-val">--</div><div class="t-cap">never reached the model</div></div>
+        </div>
+        <div class="badges-head"><h3 class="h small">Achievements</h3><span id="badge-count" class="muted">unlocked only by live proxy data</span></div>
+        <ul class="badges">
+          <li class="badge" data-badge="first-block" data-tone="red" title="Unlocks when /airlock/stats reports at least one BLOCK">
+            <svg class="gem" viewBox="0 0 24 24" aria-hidden="true"><polygon class="g1" points="12,2 22,9 12,22"/><polygon class="g2" points="12,2 2,9 12,22"/><polygon class="g3" points="2,9 22,9 12,13"/></svg>
+            <div class="b-text"><div class="b-name">First block</div><div class="b-rule">BLOCK count reaches 1</div></div><span class="b-state">Locked</span>
+          </li>
+          <li class="badge" data-badge="first-redact" data-tone="amber" title="Unlocks when /airlock/stats reports at least one REDACT">
+            <svg class="gem" viewBox="0 0 24 24" aria-hidden="true"><polygon class="g1" points="12,2 22,9 12,22"/><polygon class="g2" points="12,2 2,9 12,22"/><polygon class="g3" points="2,9 22,9 12,13"/></svg>
+            <div class="b-text"><div class="b-name">First redaction</div><div class="b-rule">REDACT count reaches 1</div></div><span class="b-state">Locked</span>
+          </li>
+          <li class="badge" data-badge="quarantine" data-tone="amber" title="Unlocks when /airlock/stats lists a quarantined tool">
+            <svg class="gem" viewBox="0 0 24 24" aria-hidden="true"><polygon class="g1" points="12,2 22,9 12,22"/><polygon class="g2" points="12,2 2,9 12,22"/><polygon class="g3" points="2,9 22,9 12,13"/></svg>
+            <div class="b-text"><div class="b-name">Tool quarantined</div><div class="b-rule">a tool definition was pulled</div></div><span class="b-state">Locked</span>
+          </li>
+          <li class="badge" data-badge="rugpull" data-tone="red" title="Unlocks when a TOOL-RUGPULL finding appears in /airlock/events">
+            <svg class="gem" viewBox="0 0 24 24" aria-hidden="true"><polygon class="g1" points="12,2 22,9 12,22"/><polygon class="g2" points="12,2 2,9 12,22"/><polygon class="g3" points="2,9 22,9 12,13"/></svg>
+            <div class="b-text"><div class="b-name">Rug pull caught</div><div class="b-rule">TOOL-RUGPULL in the feed</div></div><span class="b-state">Locked</span>
+          </li>
+          <li class="badge" data-badge="flagged" data-tone="cyan" title="Unlocks when /airlock/reputation shows a subject at Suspicious or Blocked">
+            <svg class="gem" viewBox="0 0 24 24" aria-hidden="true"><polygon class="g1" points="12,2 22,9 12,22"/><polygon class="g2" points="12,2 2,9 12,22"/><polygon class="g3" points="2,9 22,9 12,13"/></svg>
+            <div class="b-text"><div class="b-name">Bad actor flagged</div><div class="b-rule">a subject fell below 40</div></div><span class="b-state">Locked</span>
+          </li>
+          <li class="badge" data-badge="audit" data-tone="teal" title="Unlocks while /airlock/audit/verify reports an intact chain with at least one record">
+            <svg class="gem" viewBox="0 0 24 24" aria-hidden="true"><polygon class="g1" points="12,2 22,9 12,22"/><polygon class="g2" points="12,2 2,9 12,22"/><polygon class="g3" points="2,9 22,9 12,13"/></svg>
+            <div class="b-text"><div class="b-name">Audit chain intact</div><div class="b-rule">every hash links up</div></div><span class="b-state">Locked</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel" aria-labelledby="h-feed">
+        <div class="ph"><h2 id="h-feed" class="h">Live decision feed</h2><span id="feed-count" class="muted">newest first</span></div>
+        <div class="feed-head"><span>Time</span><span>Action</span><span>Top rules</span><span>Source / tool</span><span class="r">ms</span></div>
+        <ul id="feed" class="feed"><li class="empty">Waiting for data from the proxy.</li></ul>
+      </section>
+
+      <div class="side">
+        <section class="panel" aria-labelledby="h-rep">
+          <div class="ph"><h2 id="h-rep" class="h">Reputation ladder</h2><span id="rep-count" class="muted"></span></div>
+          <ol id="rep" class="rep"><li class="empty">Waiting for data from the proxy.</li></ol>
+          <div class="legend">
+            <span><i class="lvl-trusted"></i>Trusted 75+</span>
+            <span><i class="lvl-neutral"></i>Neutral 40+</span>
+            <span><i class="lvl-suspicious"></i>Suspicious 20+</span>
+            <span><i class="lvl-blocked"></i>Blocked under 20</span>
+          </div>
+        </section>
+
+        <div class="pair">
+          <section class="panel" aria-labelledby="h-q">
+            <div class="ph"><h2 id="h-q" class="h">Quarantined tools</h2><span id="q-count" class="muted"></span></div>
+            <ul id="qlist" class="qlist"><li class="empty">Waiting for data.</li></ul>
+          </section>
+          <section class="panel" aria-labelledby="h-audit">
+            <div class="ph"><h2 id="h-audit" class="h">Audit chain</h2></div>
+            <div id="audit-state" class="audit-state">--</div>
+            <div class="audit-num"><b id="audit-count">--</b> records verified</div>
+            <div id="audit-detail" class="muted">Hash chained log, checked live.</div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Live data from this proxy. No content is stored, only rule ids and hashes.</span>
+    <span class="upd" id="updated">polling every 2 s</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var POLL_MS = 2000;
+  var ACTIONS = ["ALLOW", "WARN", "REDACT", "BLOCK"];
+  var LEVEL_NAMES = { trusted: "Trusted", neutral: "Neutral", suspicious: "Suspicious", blocked: "Blocked" };
+
+  var state = {
+    startedIso: null, startedMs: null, online: null,
+    counts: null, feedPrimed: false, seen: new Set(),
+    unlocked: new Set(), badgesPrimed: false
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+  function num(v) { return typeof v === "number" && isFinite(v) ? v : 0; }
+  function str(v) { return v === null || v === undefined ? "" : String(v); }
+  function pad(n) { return n < 10 ? "0" + n : String(n); }
+  function isObj(v) { return v !== null && typeof v === "object" && !Array.isArray(v); }
+  function restart(node, cls) { node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls); }
+  function clock(d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()); }
+
+  async function getJSON(path) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, 4000);
+    try {
+      var r = await fetch(path, {
+        cache: "no-store", credentials: "same-origin", signal: ctrl.signal,
+        headers: { "accept": "application/json" }
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function setOnline(on) {
+    if (state.online === on) return;
+    state.online = on;
+    document.body.classList.toggle("offline", !on);
+    $("offline").hidden = on;
+    $("pill").className = "pill " + (on ? "on" : "off");
+    $("status-text").textContent = on ? "Online" : "Proxy offline";
+    tick();
+  }
+
+  function tick() {
+    if (!state.online || state.startedMs === null) { $("uptime").textContent = "--"; return; }
+    var secs = Math.max(0, Math.floor((Date.now() - state.startedMs) / 1000));
+    var h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+    $("uptime").textContent = (h ? h + "h " : "") + pad(m) + "m " + pad(s) + "s";
+  }
+
+  /* Shield, counters, quarantine */
+  function renderStats(s) {
+    if (s.started_at !== state.startedIso) {
+      if (state.startedIso !== null) {  // proxy restarted: forget this session's baselines
+        state.counts = null; state.feedPrimed = false; state.unlocked.clear(); state.badgesPrimed = false;
+      }
+      state.startedIso = s.started_at;
+      var t = Date.parse(str(s.started_at));
+      state.startedMs = isNaN(t) ? null : t;
+      $("since").textContent = isNaN(t) ? "" : "since " + clock(new Date(t));
+    }
+    var a = isObj(s.actions) ? s.actions : {};
+    var counts = {};
+    var total = 0;
+    ACTIONS.forEach(function (k) { counts[k] = num(a[k]); total += counts[k]; });
+    ACTIONS.forEach(function (k) {
+      $("count-" + k).textContent = String(counts[k]);
+      if (state.counts && counts[k] > state.counts[k]) restart($("tile-" + k), "pulse");
+      $("dist-" + k).style.flexGrow = total ? String(counts[k]) : "0";
+    });
+    state.counts = counts;
+    $("shield-score").textContent = String(counts.REDACT + counts.BLOCK);
+    $("shield-requests").textContent = String(num(s.requests));
+    $("meta-passthrough").textContent = String(num(s.passthrough));
+    $("meta-errors").textContent = String(num(s.errors));
+
+    var tools = Array.isArray(s.quarantined_tools) ? s.quarantined_tools : [];
+    var list = $("qlist");
+    var items = tools.map(function (name) {
+      var li = el("li", "qitem");
+      var span = el("span", "qname", str(name));
+      span.title = str(name);
+      li.appendChild(span);
+      return li;
+    });
+    if (!items.length) items = [el("li", "empty", "No tools quarantined.")];
+    list.replaceChildren.apply(list, items);
+    $("q-count").textContent = tools.length ? String(tools.length) : "";
+  }
+
+  /* Live decision feed */
+  function topRules(findings) {
+    var out = [];
+    findings.forEach(function (f) {
+      var id = isObj(f) ? str(f.rule_id) : "";
+      if (id && out.indexOf(id) === -1) out.push(id);
+    });
+    return out;
+  }
+
+  function renderEvents(events) {
+    var feed = $("feed");
+    if (!Array.isArray(events)) {
+      feed.replaceChildren(el("li", "empty", "Decision feed unavailable."));
+      return;
+    }
+    var keys = new Set();
+    var rows = [];
+    events.forEach(function (ev) {
+      if (!isObj(ev)) return;
+      var key = str(ev.trace_id) + "|" + str(ev.ts);
+      keys.add(key);
+      var row = el("li", "row");
+      if (state.feedPrimed && !state.seen.has(key)) row.classList.add("new");
+
+      var d = new Date(str(ev.ts));
+      var time = el("span", "time", isNaN(d.getTime()) ? str(ev.ts) : clock(d));
+      time.title = str(ev.ts) + "  trace " + str(ev.trace_id);
+      row.appendChild(time);
+
+      var action = str(ev.action).toUpperCase();
+      var known = ACTIONS.indexOf(action) !== -1;
+      var chipWrap = el("span");
+      chipWrap.appendChild(el("span", "chip " + (known ? action.toLowerCase() : "other"), action || "?"));
+      row.appendChild(chipWrap);
+
+      var findings = Array.isArray(ev.findings) ? ev.findings.filter(isObj) : [];
+      var ids = topRules(findings);
+      var rules = el("span", "rules");
+      if (!ids.length) {
+        rules.appendChild(el("span", "none", "no findings"));
+      } else {
+        ids.slice(0, 3).forEach(function (id) {
+          var r = el("span", "rule", id);
+          r.title = id;
+          rules.appendChild(r);
+        });
+        if (ids.length > 3) rules.appendChild(el("span", "more", "+" + (ids.length - 3)));
+      }
+      row.appendChild(rules);
+
+      var src = el("span", "src");
+      var lead = findings.filter(function (f) { return f.tool_name; })[0] || findings[0];
+      if (lead) {
+        src.appendChild(document.createTextNode(str(lead.source).replace(/_/g, " ")));
+        if (lead.tool_name) {
+          src.appendChild(document.createTextNode("  "));
+          src.appendChild(el("span", "tool", str(lead.tool_name)));
+        }
+        src.title = str(lead.source) + (lead.tool_name ? " / " + str(lead.tool_name) : "");
+      } else {
+        src.appendChild(el("span", "none", "clean"));
+      }
+      row.appendChild(src);
+
+      row.appendChild(el("span", "ms", num(ev.elapsed_ms).toFixed(1)));
+      rows.push(row);
+    });
+    if (!rows.length) rows = [el("li", "empty", "No decisions yet. Point an agent at this proxy to see traffic.")];
+    feed.replaceChildren.apply(feed, rows);
+    state.seen = keys;
+    state.feedPrimed = true;
+    $("feed-count").textContent = events.length ? events.length + " recent, newest first" : "newest first";
+  }
+
+  /* Reputation ladder */
+  function levelOf(entry) {
+    var lv = str(entry.level).toLowerCase();
+    if (LEVEL_NAMES[lv]) return lv;
+    var sc = num(entry.score);
+    return sc >= 75 ? "trusted" : sc >= 40 ? "neutral" : sc >= 20 ? "suspicious" : "blocked";
+  }
+
+  function renderRep(rep) {
+    var list = $("rep");
+    if (!isObj(rep)) {
+      list.replaceChildren(el("li", "empty", "Reputation unavailable."));
+      $("rep-count").textContent = "";
+      return;
+    }
+    var entries = Object.keys(rep).filter(function (k) { return isObj(rep[k]); }).map(function (k) { return [k, rep[k]]; });
+    entries.sort(function (x, y) { return num(y[1].score) - num(x[1].score) || (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0); });
+    var rows = entries.map(function (pair, i) {
+      var subject = pair[0], e = pair[1], lv = levelOf(e);
+      var li = el("li", "rep-row");
+      li.appendChild(el("span", "rank", "#" + (i + 1)));
+      var who = el("div", "who");
+      var name = el("div", "subj", subject);
+      name.title = subject + "  (" + num(e.incidents) + " incidents)";
+      who.appendChild(name);
+      var track = el("div", "track");
+      var fill = el("div", "fill lvl-" + lv);
+      fill.style.width = Math.max(0, Math.min(100, num(e.score))) + "%";
+      track.appendChild(fill);
+      who.appendChild(track);
+      li.appendChild(who);
+      li.appendChild(el("span", "sc", String(Math.round(num(e.score)))));
+      li.appendChild(el("span", "lvl lvl-" + lv, LEVEL_NAMES[lv]));
+      return li;
+    });
+    if (!rows.length) rows = [el("li", "empty", "No subjects yet. Tools earn a score once they appear in traffic.")];
+    list.replaceChildren.apply(list, rows);
+    $("rep-count").textContent = entries.length ? entries.length + " subjects" : "";
+  }
+
+  /* Audit chain */
+  function renderAudit(a) {
+    var st = $("audit-state");
+    if (!isObj(a)) {
+      st.className = "audit-state";
+      st.textContent = "Unknown";
+      $("audit-count").textContent = "--";
+      $("audit-detail").textContent = "Audit verification unavailable.";
+      return;
+    }
+    var ok = a.ok === true;
+    st.className = "audit-state " + (ok ? "ok" : "bad");
+    st.textContent = ok ? "Intact" : "Broken";
+    $("audit-count").textContent = String(num(a.records_checked));
+    if (!ok) {
+      $("audit-detail").textContent = "Chain breaks at record #" + str(a.first_bad_seq) + ". Records after it cannot be trusted.";
+    } else if (num(a.records_checked) === 0) {
+      $("audit-detail").textContent = "Empty chain. The first decision starts it.";
+    } else {
+      $("audit-detail").textContent = "Every record hash links to the previous one.";
+    }
+  }
+
+  /* Achievements: each test reads only endpoint data */
+  var BADGES = {
+    "first-block": { sticky: true, test: function (d) { return d.stats && num((d.stats.actions || {}).BLOCK) >= 1; } },
+    "first-redact": { sticky: true, test: function (d) { return d.stats && num((d.stats.actions || {}).REDACT) >= 1; } },
+    "quarantine": { sticky: true, test: function (d) { return d.stats && Array.isArray(d.stats.quarantined_tools) && d.stats.quarantined_tools.length > 0; } },
+    "rugpull": { sticky: true, test: function (d) {
+      return Array.isArray(d.events) && d.events.some(function (ev) {
+        return isObj(ev) && Array.isArray(ev.findings) && ev.findings.some(function (f) {
+          return isObj(f) && str(f.rule_id).indexOf("TOOL-RUGPULL") === 0;
+        });
+      });
+    } },
+    "flagged": { sticky: true, test: function (d) {
+      return isObj(d.rep) && Object.keys(d.rep).some(function (k) {
+        var e = d.rep[k];
+        return isObj(e) && (levelOf(e) === "suspicious" || levelOf(e) === "blocked");
+      });
+    } },
+    "audit": { sticky: false, test: function (d) { return isObj(d.audit) && d.audit.ok === true && num(d.audit.records_checked) >= 1; } }
+  };
+
+  function renderBadges(d) {
+    var nodes = document.querySelectorAll(".badge[data-badge]");
+    var count = 0;
+    Array.prototype.forEach.call(nodes, function (node) {
+      var id = node.getAttribute("data-badge");
+      var def = BADGES[id];
+      if (!def) return;
+      var hit = false;
+      try { hit = !!def.test(d); } catch (e) { hit = false; }
+      var was = state.unlocked.has(id);
+      var on = hit || (def.sticky && was);
+      if (on) state.unlocked.add(id); else state.unlocked.delete(id);
+      node.classList.toggle("on", on);
+      node.querySelector(".b-state").textContent = on ? "Unlocked" : "Locked";
+      if (on && !was && state.badgesPrimed) restart(node, "pop");
+      if (on) count += 1;
+    });
+    state.badgesPrimed = true;
+    $("badge-count").textContent = count + " of " + nodes.length + " unlocked from live data";
+  }
+
+  function safe(fn, arg) { try { fn(arg); } catch (e) { /* keep polling */ } }
+
+  async function poll() {
+    try {
+      var res = await Promise.allSettled([
+        getJSON("/airlock/stats"), getJSON("/airlock/events"),
+        getJSON("/airlock/reputation"), getJSON("/airlock/audit/verify")
+      ]);
+      var val = function (i) { return res[i].status === "fulfilled" ? res[i].value : null; };
+      var d = { stats: val(0), events: val(1), rep: val(2), audit: val(3) };
+      if (!isObj(d.stats)) {
+        setOnline(false);
+        return;
+      }
+      setOnline(true);
+      safe(renderStats, d.stats);
+      safe(renderEvents, d.events);
+      safe(renderRep, d.rep);
+      safe(renderAudit, d.audit);
+      safe(renderBadges, d);
+      $("updated").textContent = "updated " + clock(new Date()) + ", polling every 2 s";
+    } catch (e) {
+      setOnline(false);
+    } finally {
+      setTimeout(poll, POLL_MS);
+    }
+  }
+
+  setInterval(tick, 1000);
+  poll();
+})();
+</script>
+</body>
+</html>

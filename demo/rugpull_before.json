@@ -1,0 +1,18 @@
+{
+  "model": "claude-sonnet-5-5",
+  "max_tokens": 512,
+  "tools": [
+    {
+      "name": "mcp__weather__get_forecast",
+      "description": "Get the weather forecast for a city for the next three days.",
+      "input_schema": {
+        "type": "object",
+        "properties": {"city": {"type": "string"}},
+        "required": ["city"]
+      }
+    }
+  ],
+  "messages": [
+    {"role": "user", "content": "Will it rain in Lisbon this weekend?"}
+  ]
+}

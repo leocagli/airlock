@@ -1,0 +1,78 @@
+# Continuous security evidence: every push, every PR and every night the tests
+# and the scanners run again with no human in the loop.
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" pytest bandit pip-audit
+
+      - name: Unit tests (engine, detectors, autonomy)
+        run: python -m pytest -q
+
+      - name: Smoke test over HTTP (proxy + mock model)
+        run: |
+          python -m pip install -e ".[proxy]"
+          bash scripts/smoke.sh
+
+      - name: Bandit (static analysis of airlock/)
+        run: bandit -r airlock -q
+
+      - name: pip-audit (known vulnerabilities in the installed dependencies)
+        run: pip-audit --skip-editable --progress-spinner off
+
+      - name: Export dependency list for Snyk
+        if: always()
+        run: python -m pip freeze --exclude-editable > requirements-ci.txt
+
+      - name: Snyk open source scan
+        if: always()
+        # Hard gate when the SNYK_TOKEN secret exists, informational when it does not.
+        continue-on-error: ${{ env.SNYK_TOKEN == '' }}
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=requirements-ci.txt --package-manager=pip --skip-unresolved --severity-threshold=high
+
+      - name: Snyk Code (SAST)
+        if: always()
+        continue-on-error: ${{ env.SNYK_TOKEN == '' }}
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test
+          args: --severity-threshold=high

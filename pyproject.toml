@@ -1,0 +1,36 @@
+[project]
+name = "airlock"
+version = "0.1.0"
+description = "Airlock: indirect prompt injection and MCP tool-poisoning firewall for LLM agents. Built at the AI Security Hackathon Lisbon 2026, evolved from ArkivGate."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+proxy = ["fastapi>=0.115", "httpx>=0.28", "uvicorn>=0.32"]
+dev = ["pytest>=8.3", "httpx>=0.28", "fastapi>=0.115", "uvicorn>=0.32", "ruff>=0.6"]
+stellar = ["stellar-sdk>=16.1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+# Source and Category are (str, Enum) on purpose: the frozen contract serializes .value, and
+# StrEnum would change str() output for every caller.
+ignore = ["UP042"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["airlock*"]
+
+[tool.setuptools.package-data]
+airlock = ["static/*.html"]

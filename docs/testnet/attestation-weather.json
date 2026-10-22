@@ -1,0 +1,29 @@
+{
+  "agent": "GDLWAPCSMRQDMIGJ52J4HS6GSAQQX5XGV6XDGZTLA2PABDFJYLCBSLYS",
+  "agentId": 2,
+  "audit_head": null,
+  "evidence": {
+    "agent_id": 2,
+    "generated_at": "2026-10-22T18:51:22Z",
+    "incidents": {
+      "by_action": {},
+      "by_category": {},
+      "total": 0
+    },
+    "last_trace_ids": [],
+    "level": "neutral",
+    "registry": "stellar:testnet:GDLWAPCSMRQDMIGJ52J4HS6GSAQQX5XGV6XDGZTLA2PABDFJYLCBSLYS",
+    "schema": "airlock.reputation.v1",
+    "score": 60,
+    "subject": "server:weather"
+  },
+  "filehash": "0b402216f22cbe36c3852fb592dbcb16c33641845d2f63a3bfb44ed21bfc5bcd",
+  "fileuri": "airlock://audit/server:weather",
+  "network": "stellar:testnet",
+  "operator": "GBJNONIIWQHX2H656D5NW6GXWINFVCVFYKNKGVYATXPYPCS4PVDTQCWI",
+  "schema": "airlock.reputation.v1 (ERC-8004 feedback shape)",
+  "score": 60,
+  "subject": "server:weather",
+  "tag1": "airlock",
+  "tag2": "clean"
+}

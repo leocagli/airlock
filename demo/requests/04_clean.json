@@ -1,0 +1,35 @@
+{
+  "model": "claude-sonnet-5-5",
+  "max_tokens": 1024,
+  "system": "You are a careful Python reviewer.",
+  "tools": [
+    {
+      "name": "read_file",
+      "description": "Read a UTF-8 text file from the project and return its contents.",
+      "input_schema": {
+        "type": "object",
+        "properties": {"path": {"type": "string"}},
+        "required": ["path"]
+      }
+    }
+  ],
+  "messages": [
+    {"role": "user", "content": "Please review utils/dates.py and suggest a cleaner version of parse_day."},
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "tool_use", "id": "toolu_01read", "name": "read_file", "input": {"path": "utils/dates.py"}}
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01read",
+          "content": "from datetime import date\n\n\ndef parse_day(text):\n    parts = text.split('-')\n    if len(parts) != 3:\n        raise ValueError('expected YYYY-MM-DD')\n    return date(int(parts[0]), int(parts[1]), int(parts[2]))\n"
+        }
+      ]
+    }
+  ]
+}
